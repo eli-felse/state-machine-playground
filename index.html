@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State Machine Playground</title>
+<meta name="description" content="Define state machines by typing states and transitions, watch a live graph update, and simulate inputs to test how your machine behaves.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <h1>State Machine Playground</h1>
+    <p class="tagline">Type transitions like <code>start -&gt; waiting : go</code> and watch the graph come alive.</p>
+  </header>
+
+  <main class="layout">
+
+    <!-- LEFT: Editor -->
+    <section class="panel editor-panel" aria-labelledby="editor-heading">
+      <div class="panel-header">
+        <h2 id="editor-heading">Definition</h2>
+        <div class="examples" role="group" aria-label="Load a built-in example">
+          <label for="example-select" class="visually-hidden">Load example</label>
+          <select id="example-select" aria-label="Load example">
+            <option value="">Load example&hellip;</option>
+            <option value="traffic">Traffic light</option>
+            <option value="vending">Vending machine</option>
+            <option value="toggle">Toggle switch</option>
+            <option value="login">Login flow</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="definition-input" class="visually-hidden">State machine definition</label>
+      <textarea
+        id="definition-input"
+        spellcheck="false"
+        autocomplete="off"
+        autocapitalize="off"
+        placeholder="initial: start&#10;start -&gt; waiting : launch&#10;waiting -&gt; done : finish"
+      ></textarea>
+
+      <div class="editor-footer">
+        <button id="clear-btn" type="button" class="btn btn-ghost">Clear</button>
+        <span id="save-indicator" class="save-indicator" aria-live="polite"></span>
+      </div>
+
+      <div id="error-list" class="error-list" role="alert" aria-live="polite"></div>
+
+      <details class="syntax-help">
+        <summary>Syntax help</summary>
+        <ul>
+          <li><code>stateA -&gt; stateB</code> &mdash; a transition with no event label</li>
+          <li><code>stateA -&gt; stateB : eventName</code> &mdash; a transition triggered by an event</li>
+          <li><code>initial: stateName</code> &mdash; explicitly mark the initial state</li>
+          <li><code># comment</code> or <code>// comment</code> &mdash; ignored lines</li>
+          <li>A line with just a name (e.g. <code>idle</code>) declares an isolated state</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- RIGHT: Graph + Test panel -->
+    <section class="panel graph-panel" aria-labelledby="graph-heading">
+      <div class="panel-header">
+        <h2 id="graph-heading">Live Graph</h2>
+        <span id="state-count" class="muted"></span>
+      </div>
+      <div class="graph-wrap">
+        <svg id="graph-svg" viewBox="0 0 600 420" role="img" aria-label="Diagram of states and transitions"></svg>
+        <p id="graph-empty" class="graph-empty">Nothing to show yet &mdash; add a transition on the left.</p>
+      </div>
+    </section>
+
+    <section class="panel test-panel" aria-labelledby="test-heading">
+      <div class="panel-header">
+        <h2 id="test-heading">Test Panel</h2>
+        <button id="reset-sim-btn" type="button" class="btn btn-ghost">Reset</button>
+      </div>
+
+      <div class="current-state" aria-live="polite">
+        <span class="muted">Current state:</span>
+        <strong id="current-state-label">&mdash;</strong>
+      </div>
+
+      <div class="transition-buttons" id="transition-buttons" role="group" aria-label="Available transitions"></div>
+
+      <form id="event-form" class="event-form">
+        <label for="event-input" class="visually-hidden">Send a custom event</label>
+        <input id="event-input" type="text" placeholder="Type an event name&hellip;" autocomplete="off">
+        <button type="submit" class="btn">Send</button>
+      </form>
+
+      <div class="sim-log-wrap">
+        <h3 class="sim-log-heading">History</h3>
+        <ol id="sim-log" class="sim-log" aria-live="polite"></ol>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Made by Eli</p>
+  </footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
