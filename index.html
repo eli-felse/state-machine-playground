@@ -33,9 +33,21 @@
         </div>
       </div>
 
-      <label for="definition-input" class="visually-hidden">State machine definition</label>
+      <div class="field-label">
+        <label for="definition-input">Rules</label>
+        <span class="tooltip-wrap">
+          <button type="button" class="tooltip-trigger" aria-label="Rule syntax help" aria-describedby="rules-tooltip">?</button>
+          <span id="rules-tooltip" class="tooltip" role="tooltip">
+            Write one rule per line:<br>
+            <code>from -&gt; to : event</code><br>
+            e.g. <code>start -&gt; waiting : go</code>
+          </span>
+        </span>
+      </div>
       <textarea
         id="definition-input"
+        title="One rule per line, in the form: from -> to : event (e.g. start -> waiting : go)"
+        aria-describedby="rules-tooltip"
         spellcheck="false"
         autocomplete="off"
         autocapitalize="off"
@@ -48,6 +60,7 @@
       </div>
 
       <div id="error-list" class="error-list" role="alert" aria-live="polite"></div>
+      <div id="warning-list" class="warning-list" role="status" aria-live="polite"></div>
 
       <details class="syntax-help">
         <summary>Syntax help</summary>
@@ -56,6 +69,7 @@
           <li><code>stateA -&gt; stateB : eventName</code> &mdash; a transition triggered by an event</li>
           <li><code>initial: stateName</code> &mdash; explicitly mark the initial state</li>
           <li><code># comment</code> or <code>// comment</code> &mdash; ignored lines</li>
+          <li>States that cannot be reached from the initial state are shown in red with a warning</li>
           <li>A line with just a name (e.g. <code>idle</code>) declares an isolated state</li>
         </ul>
       </details>
@@ -88,7 +102,8 @@
 
       <form id="event-form" class="event-form">
         <label for="event-input" class="visually-hidden">Send a custom event</label>
-        <input id="event-input" type="text" placeholder="Type an event name&hellip;" autocomplete="off">
+        <input id="event-input" type="text" placeholder="Type an event name&hellip;" autocomplete="off"
+          title="Type an event name from a rule's ': event' part (e.g. go in start -> waiting : go) and press Send">
         <button type="submit" class="btn">Send</button>
       </form>
 

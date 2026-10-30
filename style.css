@@ -6,11 +6,58 @@
   --muted: #6b6f80;
   --accent: #4f5bd5;
   --accent-light: #eef0ff;
-  --danger: #d64545;
+  --on-accent: #ffffff;
+  --danger: #b42323;
   --danger-bg: #fdeceb;
+  --danger-border: #f3c9c6;
+  --warn: #7a4a00;
+  --warn-bg: #fff4e0;
+  --warn-border: #f0d29a;
+  --input-bg: #fbfbfd;
+  --select-bg: #ffffff;
+  --edge: #7b8196;
+  --edge-label: #4b4f5e;
+  --node-outline: rgba(0, 0, 0, 0.25);
+  --active-stroke: #1f2130;
+  --tooltip-bg: #1f2130;
+  --tooltip-text: #f4f5fb;
+  --tooltip-code: #c9ceff;
   --radius: 10px;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+
+/* Dark theme (follows the system setting). Contrast ratios of the text and
+   line colours below were checked against their backgrounds:
+   text 13.5:1, muted 7.4:1, accent 7.2:1, error 7.4:1, edges 6.3:1. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121420;
+    --panel-bg: #1c1f2e;
+    --border: #4a4f78;
+    --text: #e8e9f2;
+    --muted: #a9aec2;
+    --accent: #9aa5ff;
+    --accent-light: #2a2f55;
+    --on-accent: #101226;
+    --danger: #ff9a9a;
+    --danger-bg: #3a1f22;
+    --danger-border: #7a3a3f;
+    --warn: #ffd9a0;
+    --warn-bg: #3a2c12;
+    --warn-border: #7a5a1f;
+    --input-bg: #161828;
+    --select-bg: #161828;
+    --edge: #9aa0b4;
+    --edge-label: #c4c8d8;
+    --node-outline: rgba(255, 255, 255, 0.45);
+    --active-stroke: #ffffff;
+    --tooltip-bg: #e8e9f2;
+    --tooltip-text: #1c1f2e;
+    --tooltip-code: #2a3190;
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -134,7 +181,7 @@ body {
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fbfbfd;
+  background: var(--input-bg);
   color: var(--text);
 }
 
@@ -149,8 +196,77 @@ body {
   padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--select-bg);
   color: var(--text);
+}
+
+/* Field label + tooltip */
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-trigger {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.tooltip-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-20%);
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 10;
+}
+
+.tooltip code {
+  font-family: var(--mono);
+  color: var(--tooltip-code);
+  font-weight: 600;
+}
+
+.tooltip-wrap:hover .tooltip,
+.tooltip-trigger:focus + .tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 
 .editor-footer {
@@ -176,11 +292,32 @@ body {
 .error-item {
   background: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid #f3c9c6;
+  border: 1px solid var(--danger-border);
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 0.82rem;
   font-family: var(--mono);
+}
+
+.warning-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.warning-list:empty {
+  margin-top: 0;
+}
+
+.warning-item {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn-border);
+  border-left: 4px solid var(--danger);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
 }
 
 .syntax-help {
@@ -216,7 +353,7 @@ body {
   border-radius: 6px;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -262,7 +399,7 @@ body {
 }
 
 .state-node circle {
-  stroke: rgba(0,0,0,0.15);
+  stroke: var(--node-outline);
   stroke-width: 1.5;
   transition: stroke-width 0.15s ease, stroke 0.15s ease;
 }
@@ -271,19 +408,46 @@ body {
   font-family: var(--sans);
   font-size: 12px;
   font-weight: 600;
-  fill: #1a1a1a;
   text-anchor: middle;
   dominant-baseline: middle;
   pointer-events: none;
 }
 
 .state-node.is-active circle {
-  stroke: #1f2130;
+  stroke: var(--active-stroke);
   stroke-width: 3.5;
 }
 
-.state-node.is-initial circle {
-  stroke-dasharray: 0;
+.state-node .initial-ring,
+.state-node.is-active .initial-ring {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.state-node.is-unreachable circle {
+  stroke: var(--danger);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 3;
+}
+
+.state-node.is-unreachable.is-active circle {
+  stroke: var(--active-stroke);
+  stroke-dasharray: none;
+  stroke-width: 3.5;
+}
+
+.state-node.is-unreachable .warn-badge circle {
+  fill: #ffd54a;
+  stroke: #111111;
+  stroke-width: 1.5;
+  stroke-dasharray: none;
+}
+
+.state-node .warn-badge text {
+  fill: #111111;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .initial-marker {
@@ -295,15 +459,19 @@ body {
 
 .edge-path {
   fill: none;
-  stroke: #9aa0b4;
+  stroke: var(--edge);
   stroke-width: 1.6;
   marker-end: url(#arrowhead);
+}
+
+.arrowhead-shape {
+  fill: var(--edge);
 }
 
 .edge-label {
   font-family: var(--sans);
   font-size: 10.5px;
-  fill: #4b4f5e;
+  fill: var(--edge-label);
 }
 
 .edge-label-bg {
@@ -342,7 +510,7 @@ body {
 
 .transition-btn:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .no-transitions {
@@ -362,8 +530,16 @@ body {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
   font-family: var(--mono);
   font-size: 0.85rem;
+}
+
+.event-form input::placeholder,
+#definition-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .event-form input:focus {

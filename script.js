@@ -6,9 +6,13 @@
 
   var PALETTE = [
     '#4f5bd5', '#e0575b', '#3fa66a', '#e0a13f',
-    '#a15fd6', '#3ba8b5', '#d5578f', '#7a8c3d',
-    '#5578d6', '#c96b2f'
+    '#8f45cc', '#3ba8b5', '#d5578f', '#7a8c3d',
+    '#4a6ccc', '#c96b2f'
   ];
+
+  // Fill used for states that cannot be reached from the initial state.
+  // White text on this red has a contrast ratio of about 5.6:1.
+  var UNREACHABLE_COLOR = '#c62828';
 
   var EXAMPLES = {
     traffic:
@@ -45,6 +49,7 @@
     clearBtn: document.getElementById('clear-btn'),
     saveIndicator: document.getElementById('save-indicator'),
     errorList: document.getElementById('error-list'),
+    warningList: document.getElementById('warning-list'),
     svg: document.getElementById('graph-svg'),
     graphEmpty: document.getElementById('graph-empty'),
     stateCount: document.getElementById('state-count'),
@@ -133,7 +138,61 @@
       return { name: name, color: PALETTE[i % PALETTE.length] };
     });
 
-    return { states: states, transitions: transitions, errors: errors, initial: initial };
+    var unreachable = findUnreachable(stateOrder, transitions, initial);
+    var unreachableSet = {};
+    unreachable.forEach(function (name) { unreachableSet[name] = true; });
+    states.forEach(function (s) { s.unreachable = !!unreachableSet[s.name]; });
+
+    return {
+      states: states,
+      transitions: transitions,
+      errors: errors,
+      initial: initial,
+      unreachable: unreachable
+    };
+  }
+
+  // Breadth-first search from the initial state. Returns the names of all
+  // states (in declaration order) that no sequence of transitions can reach.
+  function findUnreachable(stateNames, transitions, initial) {
+    if (!initial) return [];
+    var next = {};
+    transitions.forEach(function (t) {
+      (next[t.from] = next[t.from] || []).push(t.to);
+    });
+    var seen = {};
+    seen[initial] = true;
+    var queue = [initial];
+    while (queue.length) {
+      var cur = queue.shift();
+      (next[cur] || []).forEach(function (to) {
+        if (!seen[to]) {
+          seen[to] = true;
+          queue.push(to);
+        }
+      });
+    }
+    return stateNames.filter(function (name) { return !seen[name]; });
+  }
+
+  // ---------- Colour contrast helpers ----------
+  function relativeLuminance(hex) {
+    var channels = [1, 3, 5].map(function (i) {
+      var v = parseInt(hex.substr(i, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  }
+
+  function contrastRatio(hexA, hexB) {
+    var a = relativeLuminance(hexA);
+    var b = relativeLuminance(hexB);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+
+  // Picks black-ish or white text, whichever is more readable on the fill.
+  function readableTextColor(fillHex) {
+    return contrastRatio(fillHex, '#ffffff') >= contrastRatio(fillHex, '#111111') ? '#ffffff' : '#111111';
   }
 
   // ---------- Rendering: errors ----------
@@ -144,6 +203,17 @@
       div.className = 'error-item';
       div.textContent = 'Line ' + err.line + ': ' + err.message;
       els.errorList.appendChild(div);
+    });
+  }
+
+  // ---------- Rendering: warnings ----------
+  function renderWarnings(unreachable, initial) {
+    els.warningList.innerHTML = '';
+    unreachable.forEach(function (name) {
+      var div = document.createElement('div');
+      div.className = 'warning-item';
+      div.textContent = 'Warning: state "' + name + '" is unreachable from the start state "' + initial + '".';
+      els.warningList.appendChild(div);
     });
   }
 
@@ -212,7 +282,7 @@
       id: 'arrowhead', viewBox: '0 0 10 10', refX: '8', refY: '5',
       markerWidth: '7', markerHeight: '7', orient: 'auto-start-reverse'
     });
-    marker.appendChild(svgEl('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: '#9aa0b4' }));
+    marker.appendChild(svgEl('path', { d: 'M 0 0 L 10 5 L 0 10 z', 'class': 'arrowhead-shape' }));
     defs.appendChild(marker);
     svg.appendChild(defs);
 
@@ -249,7 +319,8 @@
     svg.appendChild(nodeLayer);
 
     els.stateCount.textContent = model.states.length + ' state' + (model.states.length === 1 ? '' : 's') +
-      ', ' + model.transitions.length + ' transition' + (model.transitions.length === 1 ? '' : 's');
+      ', ' + model.transitions.length + ' transition' + (model.transitions.length === 1 ? '' : 's') +
+      (model.unreachable.length ? ', ' + model.unreachable.length + ' unreachable' : '');
   }
 
   function drawEdge(layer, p1, p2, label, bend) {
@@ -320,21 +391,36 @@
   function drawNode(layer, state, pos, r) {
     var g = svgEl('g', {
       'class': 'state-node' + (state.name === currentState ? ' is-active' : '') +
-        (state.name === (model && model.initial) ? ' is-initial' : ''),
+        (state.name === (model && model.initial) ? ' is-initial' : '') +
+        (state.unreachable ? ' is-unreachable' : ''),
       'transform': 'translate(' + pos.x + ',' + pos.y + ')'
     });
-    var circle = svgEl('circle', { r: r, fill: state.color });
+    var fill = state.unreachable ? UNREACHABLE_COLOR : state.color;
+    var circle = svgEl('circle', { r: r, fill: fill });
     g.appendChild(circle);
 
     if (state.name === (model && model.initial)) {
-      var ring = svgEl('circle', { r: r + 5, fill: 'none', stroke: state.color, 'stroke-width': 1.5, 'stroke-dasharray': '3,3' });
-      g.appendChild(ring);
+      g.appendChild(svgEl('circle', { r: r + 5, fill: 'none', 'class': 'initial-ring' }));
     }
 
-    var text = svgEl('text', {});
+    var text = svgEl('text', { fill: readableTextColor(fill) });
     var label = state.name.length > 12 ? state.name.slice(0, 11) + '\u2026' : state.name;
     text.textContent = label;
     g.appendChild(text);
+
+    if (state.unreachable) {
+      // Warning badge so the state is flagged by more than colour alone.
+      var badge = svgEl('g', { 'class': 'warn-badge', transform: 'translate(' + (r * 0.75) + ',' + (-r * 0.75) + ')' });
+      badge.appendChild(svgEl('circle', { r: 9 }));
+      var bang = svgEl('text', {});
+      bang.textContent = '!';
+      badge.appendChild(bang);
+      g.appendChild(badge);
+
+      var title = svgEl('title', {});
+      title.textContent = 'Unreachable from the start state "' + model.initial + '"';
+      g.appendChild(title);
+    }
 
     layer.appendChild(g);
   }
@@ -442,6 +528,7 @@
   function rebuildFromText(text) {
     model = parseDefinition(text);
     renderErrors(model.errors);
+    renderWarnings(model.unreachable, model.initial);
     resetSimulation();
   }
 
