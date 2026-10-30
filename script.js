@@ -2,6 +2,7 @@
   'use strict';
 
   var STORAGE_KEY = 'smp_definition_v1';
+  var HIDE_REPEATS_KEY = 'smp_hide_repeats_v1';
 
   var PALETTE = [
     '#4f5bd5', '#e0575b', '#3fa66a', '#e0a13f',
@@ -52,12 +53,14 @@
     eventForm: document.getElementById('event-form'),
     eventInput: document.getElementById('event-input'),
     simLog: document.getElementById('sim-log'),
+    hideRepeats: document.getElementById('hide-repeats-toggle'),
     resetSimBtn: document.getElementById('reset-sim-btn')
   };
 
   // ---------- Simulation state ----------
   var model = null;      // parsed model
   var currentState = null;
+  var logData = [];      // full history; the filter only changes how it is displayed
   var saveTimer = null;
 
   // ---------- Parser ----------
@@ -339,7 +342,8 @@
   // ---------- Simulation ----------
   function resetSimulation() {
     currentState = model && model.initial ? model.initial : null;
-    els.simLog.innerHTML = '';
+    logData = [];
+    renderLog();
     updateSimUI();
   }
 
@@ -378,7 +382,7 @@
   function applyTransition(t) {
     var from = currentState;
     currentState = t.to;
-    logEntry(from + ' \u2014' + (t.event ? t.event : '\u03b5') + '\u2192 ' + t.to, false);
+    logEntry(from + ' \u2014' + (t.event ? t.event : '\u03b5') + '\u2192 ' + t.to, false, t.event);
     updateSimUI();
   }
 
@@ -390,15 +394,47 @@
     if (match) {
       applyTransition(match);
     } else {
-      logEntry('No transition for event "' + eventName + '" from state "' + currentState + '"', true);
+      logEntry('No transition for event "' + eventName + '" from state "' + currentState + '"', true, eventName);
     }
   }
 
-  function logEntry(text, isError) {
-    var li = document.createElement('li');
-    li.textContent = text;
-    if (isError) li.className = 'log-error';
-    els.simLog.appendChild(li);
+  function logEntry(text, isError, eventName) {
+    logData.push({ text: text, isError: !!isError, event: eventName });
+    renderLog();
+  }
+
+  // Re-draws the history list from logData. When "hide repeated events" is on,
+  // an entry is folded into the previous one if it has the same event and the
+  // same outcome (move vs. no-match), and a "×N" badge shows how many were folded.
+  function renderLog() {
+    var hide = els.hideRepeats.checked;
+    var rows = [];
+    var lastKey = null;
+
+    logData.forEach(function (entry) {
+      var key = (entry.isError ? 'error' : 'move') + '\u0000' + entry.event;
+      if (hide && rows.length && key === lastKey) {
+        rows[rows.length - 1].count += 1;
+        return;
+      }
+      rows.push({ entry: entry, count: 1 });
+      lastKey = key;
+    });
+
+    els.simLog.innerHTML = '';
+    rows.forEach(function (row) {
+      var li = document.createElement('li');
+      li.textContent = row.entry.text;
+      if (row.entry.isError) li.className = 'log-error';
+      if (row.count > 1) {
+        var badge = document.createElement('span');
+        badge.className = 'log-repeat-count';
+        badge.textContent = '\u00d7' + row.count;
+        badge.title = row.count + ' consecutive repeats of this event';
+        li.appendChild(badge);
+      }
+      els.simLog.appendChild(li);
+    });
     els.simLog.scrollTop = els.simLog.scrollHeight;
   }
 
@@ -446,6 +482,13 @@
     els.input.focus();
   });
 
+  els.hideRepeats.addEventListener('change', function () {
+    try {
+      localStorage.setItem(HIDE_REPEATS_KEY, els.hideRepeats.checked ? '1' : '0');
+    } catch (e) { /* preference just won't persist */ }
+    renderLog();
+  });
+
   els.resetSimBtn.addEventListener('click', function () {
     resetSimulation();
   });
@@ -467,6 +510,7 @@
     var saved = null;
     try {
       saved = localStorage.getItem(STORAGE_KEY);
+      els.hideRepeats.checked = localStorage.getItem(HIDE_REPEATS_KEY) === '1';
     } catch (e) {
       saved = null;
     }

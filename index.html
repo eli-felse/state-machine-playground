@@ -93,7 +93,13 @@
       </form>
 
       <div class="sim-log-wrap">
-        <h3 class="sim-log-heading">History</h3>
+        <div class="sim-log-header">
+          <h3 class="sim-log-heading">History</h3>
+          <label class="log-filter" for="hide-repeats-toggle">
+            <input id="hide-repeats-toggle" type="checkbox">
+            <span>Hide repeated events</span>
+          </label>
+        </div>
         <ol id="sim-log" class="sim-log" aria-live="polite"></ol>
       </div>
     </section>

@@ -1,6 +1,6 @@
 # State Machine Playground
 
-An interactive tool for designing finite state machines by typing simple text rules like 'start -> waiting : go'. As you type, a live diagram of colored state nodes and labeled arrows updates automatically, and a built-in test panel lets you click transitions or type events to simulate the machine step by step, with a history log of every move. It comes with ready-made examples (traffic light, vending machine, toggle switch, login flow) and automatically saves your work in the browser.
+An interactive tool for designing finite state machines by typing simple text rules like 'start -> waiting : go'. As you type, a live diagram of colored state nodes and labeled arrows updates automatically, and a built-in test panel lets you click transitions or type events to simulate the machine step by step, with a history log of every move. A "Hide repeated events" filter collapses consecutive repeats of the same event in the history into a single entry with a count badge, which keeps loops and retries easy to read. It comes with ready-made examples (traffic light, vending machine, toggle switch, login flow) and automatically saves your work in the browser.
 
 **Tags:** html, css, javascript, svg, visualization, interactive
 
@@ -19,4 +19,4 @@ Learn more at [elifelse.org](https://elifelse.org)
 
 ---
 
-Built with `anthropic/claude-sonnet-5`
+Built with `anthropic/claude-sonnet-5.5`
